@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interpolación de Lagrange</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Calculadora por Interpolación de Lagrange</h1>
+    
+    <form method="post">
+        <label for="funcion">Función:</label>
+        <input type="text" id="funcion" name="funcion" placeholder="notacion python numpy np.">
+        
+        <br>
+        <label for="a">Límite Inferior (a):</label>
+        <input type="text" id="a" name="a" placeholder="numeros o numpy">
+
+        <br>
+        <label for="b">Límite Superior (b):</label>
+        <input type="text" id="b" name="b" placeholder="numeros o numpy">
+
+        <br>
+        <button type="submit">Calcular</button>
+    </form>
+
+    <div>
+        {% if resultado %}
+            <h2>Resultado:</h2>
+            <p>{{ resultado }}</p>
+        {% endif %}
+
+        {% if error %}
+            <h2 style="color: red;">Error:</h2>
+            <p>{{ error }}</p>
+        {% endif %}
+    </div>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<h2>Resultado:</h2>
+<p id="resultado"></p>
+<div id="grafica"></div>
+
+<script>
+    document.querySelector("form").addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        let funcion = document.getElementById("funcion").value;
+        let a = document.getElementById("a").value;
+        let b = document.getElementById("b").value;
+
+        fetch("/calculate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ funcion, a, b })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                let trace1 = {
+                    x: data.graph.x,
+                    y: data.graph.y,
+                    mode: "lines",
+                    name: "Función Original"
+                };
+
+                let trace2 = {
+                    x: data.graph.interpolated.map(p => p[0]),
+                    y: data.graph.interpolated.map(p => p[1]),
+                    mode: "markers",
+                    name: "Interpolación",
+                    marker: { color: "red" }
+                };
+
+                Plotly.newPlot("grafica", [trace1, trace2], { title: "Interpolación de Lagrange" });
+
+                document.getElementById("resultado").innerHTML = data.resultado;
+            }
+        });
+    });
+</script>
+
+
+</body>
+
+</html>
